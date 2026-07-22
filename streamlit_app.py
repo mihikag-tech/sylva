@@ -1,5 +1,6 @@
 import streamlit as st
 import pickle
+import xgboost
 
 st.title("Welcome to Sylva!")
 st.write(
