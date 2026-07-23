@@ -4,15 +4,19 @@ import pandas as pd
 import sklearn
 
 #Visual web display
-st.title("Welcome to Sylva!")
+st.title("Hello! Welcome to Sylva!")
 
-
+st.header("Let's get some information first.")
 unique_counties = pd.read_csv('county_names.csv')
-
+# Records county choice through dropdown; saves in var 'county'
 county = st.selectbox(
-    "Please choose a county to begin:", 
-    unique_counties
+    "Please choose a county to target:", 
+    unique_counties, 
+    placeholder = " "
 )
+budget = st.number_input("What's your budget (in thousands)?")
+st.write("Your budget is " + str(budget) + "k and your county is " + str(county))
+
 st.write(
     "Here's the data we used:"
 )
