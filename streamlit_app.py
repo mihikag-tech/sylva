@@ -1,27 +1,27 @@
 import streamlit as st
 import pickle
-import xgboost
 import pandas as pd
 import sklearn
-import matplotlib.pyplot as plt
-from threading import RLock
-import numpy as np
+
+#Visual web display
+st.title("Welcome to Sylva!")
+
+
+unique_counties = pd.read_csv('county_names.csv')
+
+county = st.selectbox(
+    "Please choose a county to begin:", 
+    unique_counties
+)
+st.write(
+    "Here's the data we used:"
+)
 
 data = pd.read_csv('Combined_dataset_model.csv')
 X = data.drop(['health_nor', 'biome', 'county'], axis = 1)
 y = data['health_nor']
 X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, test_size = 0.2, random_state = 42)
 
-#Visual web display
-st.title("Welcome to Sylva!")
-
-county = st.selectbox(
-    "Please choose a county to begin:", 
-    data['county']
-)
-st.write(
-    "Here's the data we used:"
-)
 st.dataframe(data)
 
 st.write(
