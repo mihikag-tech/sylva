@@ -24,6 +24,8 @@ st.write(
 )
 
 df = pd.read_csv('Combined_dataset_model.csv')
+df = pd.get_dummies(df, columns=["biome"], dtype=int)
+df = df.drop(columns=['Unnamed: 0'])
 
 features = ['land_area', 'treecanopy', 'tc_gap',
        'priority_i', 'pctpocnorm', 'pctpovnorm', 'unemplnorm', 'dep_perc',
