@@ -110,7 +110,7 @@ def impact_calc(model, county, solution_effects, features):
                 "county": county,
                 "solution": solution_name,
                 "original_hbi": prediction, 
-                "modified_hbi": update_prediction
+                "modified_hbi": update_prediction,
                 "pct_hbi_chg": pct_hbi_chg
             })
 
