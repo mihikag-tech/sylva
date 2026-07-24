@@ -104,11 +104,13 @@ def impact_calc(model, county, solution_effects, features):
                 modified[feature_key] = modified[feature_key] * multiplier
 
             update_prediction = model.predict(modified)[0]
-            pct_hbi_chg = update_prediction / prediction
+            pct_hbi_chg = (update_prediction - prediction) / prediction
 
             results.append({
                 "county": county,
                 "solution": solution_name,
+                "original_hbi": prediction, 
+                "modified_hbi": update_prediction
                 "pct_hbi_chg": pct_hbi_chg
             })
 
