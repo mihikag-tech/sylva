@@ -4,6 +4,7 @@ import pandas as pd
 import sklearn
 import xgboost as xgb
 import numpy as np
+from ortools.sat.python import cp_model
 
 #Visual web display
 st.title("Hello! Welcome to Sylva!")
@@ -46,19 +47,7 @@ st.write(
 
 model = pickle.load(open('new_model.pkl', 'rb'))
 xgb_pred = model.predict(X_test)
-"""
-model = xgb.XGBRegressor(learning_rate = 0.2, max_depth = 4, n_estimators = 300)
-model.fit(X_train, y_train)
-model_pred = model.predict(X_test)
-"""
-"""
-graph_y = [[y_test], [xgb_pred]]
-graph_data = pd.DataFrame(data = {
-    "x": X_test['priority_i'],
-    "y": y_test
 
-})
-"""
 
 solution_effects = {
     "green_street": {
@@ -117,4 +106,57 @@ def impact_calc(model, county, solution_effects, features):
 
     return pd.DataFrame(results)
 st.write(impact_calc(model, str(county), solution_effects, features))
+result = impact_calc(model, str(county), solution_effects, features)
 
+# Precomputed from XGBoost model.predict() for each candidate
+impacts = result   # predicted health impact
+budget  = 1200000
+
+model_cp = cp_model.CpModel()
+
+gstreet = model_cp.new_int_var(0, 5, "gstreet")
+gparklot = model_cp.new_int_var(0, 5, "gparklot")
+urbforest = model_cp.new_int_var(0, 5, "urbforest")
+groof = model_cp.new_int_var(0, 5, "groof")
+gbelt = model_cp.new_int_var(0, 5, "gbelt")
+park = model_cp.new_int_var(0, 5, "park")
+garden = model_cp.new_int_var(0, 5, "garden")
+
+model_cp.Add(
+    gstreet * 60000 + 
+    gparklot * 300000 + 
+    urbforest * 500000 +
+    groof * 200000 + 
+    gbelt * 750000 + 
+    park * 750000 + 
+    garden * 40000 
+    <= budget
+)
+model_cp.Maximize(
+    gstreet * 0.1 + 
+    gparklot * 0.06 + 
+    urbforest * 0.2 + 
+    groof * 0.05 + 
+    gbelt * 0.2 + 
+    park * 0.14 + 
+    garden * 0.03
+)
+
+solver = cp_model.CpSolver()
+status = solver.Solve(model_cp)
+
+if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+    print(f"Optimal solutions found!")
+    print(f"  Green Street interventions: {solver.Value(gstreet)}")
+    print(f"  Green Parking Lot interventions: {solver.Value(gparklot)}")
+    print(f"  Urban Forest interventions: {solver.Value(urbforest)}")
+    print(f"  Green Roof interventions: {solver.Value(groof)}")
+    print(f"  Green Belt interventions: {solver.Value(gbelt)}")
+    print(f"  Park interventions: {solver.Value(park)}")
+    print(f"  Garden interventions: {solver.Value(garden)}")
+    print(f"  Total impact: {solver.ObjectiveValue()}")
+    print(f"  Total cost: {solver.Value(gstreet) * 60000 + solver.Value(gparklot) * 300000 + solver.Value(urbforest) * 500000}")
+elif status == cp_model.INFEASIBLE:
+    print("No solution found that satisfies the constraints.")
+else:
+    print("Solver could not find an optimal or feasible solution.")
