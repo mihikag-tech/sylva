@@ -23,10 +23,7 @@ st.write(
     "Here's the data we used:"
 )
 
-df = pd.read_csv("Combined_dataset_model.csv")
-df = pd.get_dummies(df, columns=["biome"], dtype=int)
-df = df.drop(columns=['Unnamed: 0'])
-
+df = pickle.load(open('new_model.pkl', 'rb'))
 
 features = ['land_area', 'treecanopy', 'tc_gap',
        'priority_i', 'pctpocnorm', 'pctpovnorm', 'unemplnorm', 'dep_perc',
