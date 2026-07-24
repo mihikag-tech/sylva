@@ -23,7 +23,7 @@ st.write(
     "Here's the data we used:"
 )
 
-df = pickle.load(open('new_model.pkl', 'rb'))
+df = pd.read_csv('Combined_dataset_model.csv')
 
 features = ['land_area', 'treecanopy', 'tc_gap',
        'priority_i', 'pctpocnorm', 'pctpovnorm', 'unemplnorm', 'dep_perc',
@@ -41,13 +41,14 @@ st.write(
     "Here's the predicted change in HBI for each segment of the county:"
 )
 
-"""
-loaded_model = pickle.load(open('xgb_model_pickle', 'rb'))
-xgb_pred = loaded_model.predict(X_test)
+
+model = pickle.load(open('new_model.pkl', 'rb'))
+xgb_pred = model.predict(X_test)
 """
 model = xgb.XGBRegressor(learning_rate = 0.2, max_depth = 4, n_estimators = 300)
 model.fit(X_train, y_train)
 model_pred = model.predict(X_test)
+"""
 """
 graph_y = [[y_test], [xgb_pred]]
 graph_data = pd.DataFrame(data = {
