@@ -40,15 +40,16 @@ y_df = df[target]
 X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_df, y_df, test_size = 0.2, random_state = 42)
 
 st.write(
-    "Here's how it matched up to our model's predictions:"
+    "Here's the predicted change in HBI for each segment of the county:"
 )
+
+"""
 loaded_model = pickle.load(open('xgb_model_pickle', 'rb'))
 xgb_pred = loaded_model.predict(X_test)
-
+"""
 model = xgb.XGBRegressor(learning_rate = 0.2, max_depth = 4, n_estimators = 300)
 model.fit(X_train, y_train)
 model_pred = model.predict(X_test)
-
 """
 graph_y = [[y_test], [xgb_pred]]
 graph_data = pd.DataFrame(data = {
@@ -114,17 +115,3 @@ def impact_calc(model, county, solution_effects, features):
     return pd.DataFrame(results)
 st.write(impact_calc(model, str(county), solution_effects, features))
 
-"""
-_lock = RLock()
-
-x = np.random.normal(1, 1, 100)
-y = np.random.normal(1, 1, 100)
-
-with _lock:
-    fig, ax = plt.subplots()
-    ax.scatter(X_test['priority_i'], graph_data)
-    st.pyplot(fig)
-
-
-st.line_chart(data = graph_data, x = 'x', y = 'y', color = ['red'])
-"""
