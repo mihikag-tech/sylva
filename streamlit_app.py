@@ -105,7 +105,6 @@ def impact_calc(model, county, solution_effects, features):
             })
 
     return pd.DataFrame(results)
-st.write(impact_calc(model, str(county), solution_effects, features))
 result = impact_calc(model, str(county), solution_effects, features)
 
 # Precomputed from XGBoost model.predict() for each candidate
@@ -160,3 +159,6 @@ elif status == cp_model.INFEASIBLE:
     st.write("No solution found that satisfies the constraints.")
 else:
     st.write("Solver could not find an optimal or feasible solution.")
+
+st.write("An explanation of the solutions:")
+st.dataframe(pd.read_csv('Green Intervention Budgets - Sheet2.csv'))
