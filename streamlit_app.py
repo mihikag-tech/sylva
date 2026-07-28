@@ -15,14 +15,10 @@ unique_counties = pd.read_csv('county_names.csv')
 county = st.selectbox(
     "Please choose a county to target:", 
     unique_counties, 
-    placeholder = " "
 )
+#Records budget through numerical entry; saves in var 'budget'
 budget = st.number_input("What's your budget (in thousands)?")
 st.write("Your budget is " + str(budget) + "k and your county is " + str(county))
-
-st.write(
-    "Here's the data we used:"
-)
 
 df = pd.read_csv('Combined_dataset_model.csv')
 df = pd.get_dummies(df, columns=["biome"], dtype=int)
@@ -30,93 +26,108 @@ df = df.drop(columns=['Unnamed: 0'])
 
 features = ['land_area', 'treecanopy', 'tc_gap',
        'priority_i', 'pctpocnorm', 'pctpovnorm', 'unemplnorm', 'dep_perc',
-       'depratnorm', 'tes', 'tesctyscor', 'rank',
+       'depratnorm', 'health_nor', 'tes', 'tesctyscor', 'rank',
        'rankgrpsz', 'Mean_Temp', 'Median_Temp', 'STD_Temp', 'Min_Temp',
        'Max_Temp', 'Mean_Rain', 'Median_Rain', 'STD_Rain', 'Min_Rain',
-       'Max_Rain', 'biome_Desert', 'biome_Forest', 'biome_Grassland']
-st.dataframe(df)
-target = ['health_nor']
+       'Max_Rain']
+target = ['temp_norm']
 X_df = df[features]
 y_df = df[target]
 X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_df, y_df, test_size = 0.2, random_state = 42)
 
-st.write(
-    "Here's the predicted change in HBI for each segment of the county:"
-)
-
-
-model = pickle.load(open('new_model.pkl', 'rb'))
+model = pickle.load(open('optimized_xgb_model.pkl', 'rb'))
 xgb_pred = model.predict(X_test)
 
+solution_costs = pd.read_csv("Green Intervention Budgets - Sheet1.csv")
 
+# Define what each solution actually changes, and by how much
 solution_effects = {
     "green_street": {
-        "treecanopy": 1.1 #adds 10% tree canopy
+        "treecanopy": 1.10,
+        "Mean_Temp": 1.15,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Green Street"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Green Street"]["avg_sq_feet"].iloc[0])
+
+
     },
 
-    "parking_lot": {
-        "treecanopy": 1.06
+    "green_parking_lot": {
+        "treecanopy": 1.06,
+        "Mean_Temp": 1.09,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Green Parking Lot"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Green Parking Lot"]["avg_sq_feet"].iloc[0])
+
     },
 
     "urban_forest": {
-        "treecanopy": 1.2
+        "treecanopy": 1.2,
+        "Mean_Temp": 1.03,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Urban Forest"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Urban Forest"]["avg_sq_feet"].iloc[0])
+
     },
 
     "green_roof": {
-        "treecanopy": 1.05
+        "treecanopy": 1.05,
+        "Mean_Temp": 1.01,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Green Roof"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Green Roof"]["avg_sq_feet"].iloc[0])
     },
 
     "green_belt": {
-        "treecanopy": 1.2
+        "treecanopy": 1.2,
+        "Mean_Temp": 1.1,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Green Belt"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Green Belt"]["avg_sq_feet"].iloc[0])
     },
 
-    "community_park": {
+    "park": {
         "treecanopy": 1.14,
+        "Mean_Temp": 1.01,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Park"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Park"]["avg_sq_feet"].iloc[0])
     },
 
-    "community_garden": {
+    "garden": {
         "treecanopy": 1.03,
+        "Mean_Temp": 1.06,
+        "Cost": int(solution_costs[solution_costs['intervention'] == "Garden"]['sq_foot_cost_dollars'].iloc[0] * solution_costs[solution_costs['intervention'] == "Garden"]["avg_sq_feet"].iloc[0])
     }
 }
 
 solution_effects = pd.DataFrame(solution_effects)
 solution_effects = solution_effects.T
 
+
 def impact_calc(model, county, solution_effects, features):
-    county_df = df[df["county"] == county].drop(columns='health_nor')
-    results = []
+    county_df = df[df["county"] == county]
+    final_results = []
 
-    for solution_name, effects in solution_effects.items():
-        for row in county_df.itertuples(index=True):
-            baseline = df.loc[[row.Index], features]
-            prediction = model.predict(baseline)[0]
+    for row_idx, row_data in county_df.iterrows():
+        baseline = row_data[features]
+        prediction = model.predict(pd.DataFrame([baseline]))[0]
 
+        # Initialize dictionary for the current row
+        row_output = {
+            "county": county,
+            "original_temp": prediction
+        }
+
+        for solution_name, effects_series in solution_effects.iterrows():
             modified = baseline.copy()
-            for feature_key, multiplier in effects.items():
-                modified[feature_key] = modified[feature_key] * multiplier
+            for feature_key, multiplier in effects_series.items():
+                # Only modify features that are in the model's feature list and are not 'Cost'
+                if feature_key in features and feature_key != 'Cost':
+                    modified[feature_key] = modified[feature_key] * multiplier
 
-            update_prediction = model.predict(modified)[0]
-            pct_hbi_chg = np.abs((update_prediction - prediction) / prediction) * 100
+            update_prediction = model.predict(pd.DataFrame([modified]))[0]
+            pct_temp_norm_chg = ((update_prediction - prediction) / prediction) * 100 # Calculate percentage change
 
-            results.append({
-                "county": county,
-                "solution": solution_name,
-                "original_hbi": prediction, 
-                "modified_hbi": update_prediction,
-                "pct_hbi_chg": pct_hbi_chg
-            })
+            # Add solution-specific results as new columns
+            row_output[f"{solution_name}_modified_temp"] = update_prediction
+            row_output[f"{solution_name}_pct_temp_norm_chg"] = pct_temp_norm_chg
 
-    return pd.DataFrame(results)
-result = impact_calc(model, str(county), solution_effects, features)
+        final_results.append(row_output)
 
-# Precomputed from XGBoost model.predict() for each candidate
+    return pd.DataFrame(final_results)
+
+result = impact_calc(model, county, solution_effects, features)
+
 costs = [c for c in solution_effects['Cost']]
-
-from ortools.sat.python import cp_model
-
-# Precomputed from XGBoost model.predict() for each candidate
-costs = [c for c in solution_effects['Cost']]
-total_cost = 0
 final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parking_lots", 
                                         "urban_forests", "green_roofs", "green_belts", 
                                         "parks", "gardens", "total_impact", "total_cost"])
