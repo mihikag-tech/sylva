@@ -108,57 +108,91 @@ def impact_calc(model, county, solution_effects, features):
 result = impact_calc(model, str(county), solution_effects, features)
 
 # Precomputed from XGBoost model.predict() for each candidate
-impacts = result   # predicted health impact
-budget  = 1200000
+costs = [c for c in solution_effects['Cost']]
 
-model_cp = cp_model.CpModel()
+from ortools.sat.python import cp_model
 
-gstreet = model_cp.new_int_var(0, 5, "gstreet")
-gparklot = model_cp.new_int_var(0, 5, "gparklot")
-urbforest = model_cp.new_int_var(0, 5, "urbforest")
-groof = model_cp.new_int_var(0, 5, "groof")
-gbelt = model_cp.new_int_var(0, 5, "gbelt")
-park = model_cp.new_int_var(0, 5, "park")
-garden = model_cp.new_int_var(0, 5, "garden")
+# Precomputed from XGBoost model.predict() for each candidate
+costs = [c for c in solution_effects['Cost']]
+total_cost = 0
+final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parking_lots", 
+                                        "urban_forests", "green_roofs", "green_belts", 
+                                        "parks", "gardens", "total_impact", "total_cost"])
 
-model_cp.Add(
-    gstreet * 60000 + 
-    gparklot * 300000 + 
-    urbforest * 500000 +
-    groof * 200000 + 
-    gbelt * 750000 + 
-    park * 750000 + 
-    garden * 40000 
-    <= budget
-)
-model_cp.Maximize(
-    gstreet * 0.1 + 
-    gparklot * 0.06 + 
-    urbforest * 0.2 + 
-    groof * 0.05 + 
-    gbelt * 0.2 + 
-    park * 0.14 + 
-    garden * 0.03
-)
+# make it maximize impacts, not tree canopy
+# predicted health impact
+for index, row in result.iterrows():
+  baseline = row
+  temp_changes = {
+      "gstreet": baseline['green_street_pct_temp_norm_chg'], 
+      "gparklot": baseline['green_parking_lot_pct_temp_norm_chg'], 
+      "urbforest": baseline['urban_forest_pct_temp_norm_chg'],
+      "groof": baseline['green_roof_pct_temp_norm_chg'],
+      "gbelt": baseline['green_belt_pct_temp_norm_chg'],
+      "park": baseline['park_pct_temp_norm_chg'],
+      "garden": baseline['garden_pct_temp_norm_chg']
+  }
+  model_cp = cp_model.CpModel()
 
-solver = cp_model.CpSolver()
-status = solver.Solve(model_cp)
+  gstreet = model_cp.new_int_var(0, 5, "gstreet")
+  gparklot = model_cp.new_int_var(0, 5, "gparklot")
+  urbforest = model_cp.new_int_var(0, 5, "urbforest")
+  groof = model_cp.new_int_var(0, 5, "groof")
+  gbelt = model_cp.new_int_var(0, 5, "gbelt")
+  park = model_cp.new_int_var(0, 5, "park")
+  garden = model_cp.new_int_var(0, 5, "garden")
 
-if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-    st.write(f"Optimal solutions found!")
-    st.write(f"  Green Street interventions: {solver.Value(gstreet)}")
-    st.write(f"  Green Parking Lot interventions: {solver.Value(gparklot)}")
-    st.write(f"  Urban Forest interventions: {solver.Value(urbforest)}")
-    st.write(f"  Green Roof interventions: {solver.Value(groof)}")
-    st.write(f"  Green Belt interventions: {solver.Value(gbelt)}")
-    st.write(f"  Park interventions: {solver.Value(park)}")
-    st.write(f"  Garden interventions: {solver.Value(garden)}")
-    st.write(f"  Total impact: {solver.ObjectiveValue()}")
-    st.write(f"  Total cost: {solver.Value(gstreet) * 60000 + solver.Value(gparklot) * 300000 + solver.Value(urbforest) * 500000}")
-elif status == cp_model.INFEASIBLE:
+  model_cp.Add(
+     gstreet * int(costs[0]) +
+     gparklot * int(costs[1]) +
+     urbforest * int(costs[2]) +
+     groof * int(costs[3]) +
+     gbelt * int(costs[4]) +
+     park * int(costs[5]) +
+     garden * int(costs[6])
+     <= budget
+  )
+  model_cp.Minimize(
+     gstreet * temp_changes["gstreet"] +
+     gparklot * temp_changes["gparklot"] +
+     urbforest * temp_changes["urbforest"] +
+     groof * temp_changes["groof"] +
+     gbelt * temp_changes["gbelt"] +
+     park * temp_changes["park"] +
+     garden * temp_changes["garden"]
+  )
+
+  solver = cp_model.CpSolver()
+  status = solver.Solve(model_cp) # Corrected to use model_cp
+
+  if status in (cp_model.OPTIMAL, cp_model.FEASIBLE):
+    final_results = pd.concat([final_results, pd.DataFrame({
+      "county": [baseline['county']],
+      "green_streets": [solver.Value(gstreet)],
+      "green_parking_lots": [solver.Value(gparklot)],
+      "urban_forests": [solver.Value(urbforest)],
+      "green_roofs": [solver.Value(groof)],
+      "green_belts": [solver.Value(gbelt)],
+      "parks": [solver.Value(park)],
+      "gardens": [solver.Value(garden)],
+      "total_impact": [solver.ObjectiveValue()],
+      "total_cost": [solver.Value(
+        gstreet * int(costs[0]) +
+        gparklot * int(costs[1]) +
+        urbforest * int(costs[2]) +
+        groof * int(costs[3]) +
+        gbelt * int(costs[4]) +
+        park * int(costs[5]) +
+        garden * int(costs[6]))]
+    })])
+    st.dataframe(final_results)
+  elif status == cp_model.INFEASIBLE:
     st.write("No solution found that satisfies the constraints.")
-else:
+  else:
     st.write("Solver could not find an optimal or feasible solution.")
 
+
 st.write("An explanation of the solutions:")
-st.dataframe(pd.read_csv('Green Intervention Budgets - Sheet2.csv'))
+explanations = pd.read_csv('Green Intervention Budgets - Sheet2.csv')
+for row in explanations.iterrows():
+   print(row)
