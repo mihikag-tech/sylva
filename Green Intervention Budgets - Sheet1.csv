@@ -1,0 +1,8 @@
+,intervention,description,pct_tree_canopy,sq_foot_cost_dollars,avg_sq_feet,pct_temp_change
+0,Green Street,A street with vegetation and structures/materials to manage stormwater runoff. ,10,30,2000,15
+1,Green Parking Lot,A parking lot with permeable surfaces and vegetation alongisde parking spaces. ,6,10,30000,9
+3,Urban Forest,"The collective vegetation across a city, usually in large, concentrated amounts.",20,5,100000,3
+4,Green Roof,A rooftop partially or fully covered with vegetation and growing medium over a waterproofing layer.,5,20,10000,1
+5,Green Belt,"A ring or band of undeveloped, agricultural, or natural land around a city or urban area.",20,3,250000,10
+6,Park,"A public green space, typically larger, with recreation, landscaping, and large amounts of greenery, for community use.",14,15,50000,1
+7,Garden,"A smaller, more intensively cultivated green space (often used for flowers or food) with more human involvement.",3,8,5000,6
