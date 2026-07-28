@@ -79,6 +79,8 @@ solution_effects = {
     }
 }
 
+solution_effects = pd.DataFrame(solution_effects)
+solution_effects = solution_effects.T
 
 def impact_calc(model, county, solution_effects, features):
     county_df = df[df["county"] == county].drop(columns='health_nor')
