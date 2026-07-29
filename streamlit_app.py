@@ -20,7 +20,7 @@ county = st.selectbox(
 )
 #Records budget through numerical entry; saves in var 'budget'
 budget = int(st.number_input("What's your budget (in thousands)?")) * 1000
-st.write("Your budget is " + str(budget) + "k and your county is " + str(county))
+st.write("Your budget is " + str(budget) + " and your county is " + str(county))
 
 df = pd.read_csv('Combined_dataset_model.csv')
 df = pd.get_dummies(df, columns=["biome"], dtype=int)
@@ -206,8 +206,8 @@ for index, row in result.iterrows():
   else:
     st.write("Solver could not find an optimal or feasible solution.")
 
+final_results['indices'] = [0, 1, 2, 3, 4, 5, 6]
 st.dataframe(final_results)
-
 
 #map visualization - austin county
 #Beginning here, Claude was used to create the visualization
