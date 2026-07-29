@@ -31,7 +31,7 @@ df = pd.read_csv('Combined_dataset_model.csv')
 df = pd.get_dummies(df, columns=["biome"], dtype=int)
 df = df.drop(columns=['Unnamed: 0'])
 
-features = ['land_area', 'treecanopy', 'tc_gap',
+features = ['land_area', 'treecanopy',  
        'priority_i', 'pctpocnorm', 'pctpovnorm', 'unemplnorm', 'dep_perc',
        'depratnorm', 'health_nor', 'tes', 'tesctyscor', 'rank',
        'rankgrpsz', 'Mean_Temp', 'Median_Temp', 'STD_Temp', 'Min_Temp',
@@ -42,7 +42,7 @@ X_df = df[features]
 y_df = df[target]
 X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X_df, y_df, test_size = 0.2, random_state = 42)
 
-model = pickle.load(open('optimized_xgb_model.pkl', 'rb'))
+model = pickle.load(open('final_optimized_xgb_model.pkl', 'rb'))
 xgb_pred = model.predict(X_test)
 
 solution_costs = pd.read_csv("Green Intervention Budgets - Sheet1.csv")
