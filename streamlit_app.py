@@ -126,6 +126,7 @@ def impact_calc(model, county, solution_effects, features):
     return pd.DataFrame(final_results)
 
 result = impact_calc(model, county, solution_effects, features)
+st.dataframe(result)
 
 costs = [c for c in solution_effects['Cost']]
 final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parking_lots", 
@@ -156,23 +157,23 @@ for index, row in result.iterrows():
   garden = model_cp.new_int_var(0, 5, "garden")
 
   model_cp.Add(
-     gstreet * int(costs[0]) +
-     gparklot * int(costs[1]) +
-     urbforest * int(costs[2]) +
-     groof * int(costs[3]) +
-     gbelt * int(costs[4]) +
-     park * int(costs[5]) +
-     garden * int(costs[6])
-     <= budget
+      gstreet * int(costs[0]) +
+      gparklot * int(costs[1]) +
+      urbforest * int(costs[2]) +
+      groof * int(costs[3]) +
+      gbelt * int(costs[4]) +
+      park * int(costs[5]) +
+      garden * int(costs[6])
+      <= budget
   )
   model_cp.Minimize(
-     gstreet * temp_changes["gstreet"] +
-     gparklot * temp_changes["gparklot"] +
-     urbforest * temp_changes["urbforest"] +
-     groof * temp_changes["groof"] +
-     gbelt * temp_changes["gbelt"] +
-     park * temp_changes["park"] +
-     garden * temp_changes["garden"]
+      gstreet * temp_changes["gstreet"] +
+      gparklot * temp_changes["gparklot"] +
+      urbforest * temp_changes["urbforest"] +
+      groof * temp_changes["groof"] +
+      gbelt * temp_changes["gbelt"] +
+      park * temp_changes["park"] +
+      garden * temp_changes["garden"]
   )
 
   solver = cp_model.CpSolver()
