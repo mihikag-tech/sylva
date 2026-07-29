@@ -129,6 +129,7 @@ result = impact_calc(model, county, solution_effects, features)
 st.dataframe(result)
 
 costs = [c for c in solution_effects['Cost']]
+st.write(costs)
 final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parking_lots", 
                                         "urban_forests", "green_roofs", "green_belts", 
                                         "parks", "gardens", "total_impact", "total_cost"])
