@@ -211,7 +211,7 @@ for index, row in result.iterrows():
   else:
     st.write("Solver could not find an optimal or feasible solution.")
 
-final_results['indices'] = [0, 1, 2, 3, 4, 5, 6]
+
 st.write("Here's the best combination of solutions for you:")
 st.dataframe(final_results)
 
