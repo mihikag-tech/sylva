@@ -208,8 +208,10 @@ st.dataframe(final_results)
 
 
 st.write("An explanation of the solutions:")
-explanations = pd.read_csv('Green Intervention Budgets - Sheet2.csv')
-explanations.drop(columns = ["Unnamed: 0"], inplace = True)
-for row in explanations.iterrows():
-   st.write("intervention name", row['intervention'])
-   st.write("description", row['description'])
+st.write("Green Street: A street with vegetation and structures/materials to manage stormwater runoff.")
+st.write("Green Parking Lot: A parking lot with permeable surfaces and vegetation alongisde parking spaces. ")
+st.write("Urban Forest: The collective vegetation across a city, usually in large, concentrated amounts.")
+st.write("Green Roof: A rooftop partially or fully covered with vegetation and growing medium over a waterproofing layer.")
+st.write("Green Belt: A ring or band of undeveloped, agricultural, or natural land around a city or urban area.")
+st.write("Park: A public green space, typically larger, with recreation, landscaping, and large amounts of greenery, for community use.")
+st.write("Garden: A smaller, more intensively cultivated green space (often used for flowers or food) with more human involvement.")
