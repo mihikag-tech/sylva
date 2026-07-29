@@ -140,14 +140,6 @@ final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parkin
                                         "urban_forests", "green_roofs", "green_belts", 
                                         "parks", "gardens", "total_impact", "total_cost"])
 
-pct_area = 0.1
-solution_areas = [a for a in solution_costs['avg_sq_feet']]
-
-areas_scaled = df[df["county"] == county]
-areas_scaled.reset_index(inplace = True)
-areas_scaled = areas_scaled[['county', 'land_area']]
-areas_scaled['land_area'] = areas_scaled['land_area'].round(2) * 100
-areas_scaled
 
 # make it maximize impacts, not tree canopy
 # predicted temp_diff impact
@@ -183,16 +175,6 @@ for index, row in result.iterrows():
       <= budget
   )
 
-  model_cp.Add(
-      (gstreet * int(solution_areas[0])) +
-      (gparklot * int(solution_areas[1])) +
-      (urbforest * int(solution_areas[2])) +
-      (groof * int(solution_areas[3])) +
-      (gbelt * int(solution_areas[4])) +
-      (park * int(solution_areas[5])) +
-      (garden * int(solution_areas[6]))
-      <= (pct_area * int(areas_scaled.loc[index, 'land_area']) * 100)
-  )
   model_cp.Minimize(
       gstreet * temp_changes["gstreet"] +
       gparklot * temp_changes["gparklot"] +
