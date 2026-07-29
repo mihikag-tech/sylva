@@ -5,6 +5,8 @@ import sklearn
 import xgboost as xgb
 import numpy as np
 from ortools.sat.python import cp_model
+import plotly.express as px
+from pygris import tracts
 
 #Visual web display
 st.title("Hello! Welcome to Sylva!")
@@ -128,7 +130,7 @@ def impact_calc(model, county, solution_effects, features):
 result = impact_calc(model, county, solution_effects, features)
 
 costs = [c for c in solution_effects['Cost']]
-st.write(costs)
+
 final_results = pd.DataFrame(columns = ["county", "green_streets", "green_parking_lots", 
                                         "urban_forests", "green_roofs", "green_belts", 
                                         "parks", "gardens", "total_impact", "total_cost"])
@@ -207,6 +209,53 @@ for index, row in result.iterrows():
 st.dataframe(final_results)
 
 
+#map visualization - austin county
+#Beginning here, Claude was used to create the visualization
+st.set_page_config(page_title="Austin County, TX — Census Tracts", layout="wide")
+st.title("Austin County, TX — Census Tracts")
+
+# Load geometry
+@st.cache_data(show_spinner="Fetching tract boundaries from the Census Bureau...")
+def load_tracts():
+    # state="TX", county="Austin" pulls just Austin County's tracts.
+    # cb=True uses the generalized (smaller, faster-rendering) cartographic boundary file.
+    gdf = tracts(state="TX", county="Austin", cb=True, cache=True)
+    gdf = gdf.to_crs(epsg=4326)  # Plotly wants lat/lon (WGS84)
+    return gdf
+
+gdf = load_tracts()
+
+# ---------------------------------------------------------------------------
+# Build the map - 
+# ---------------------------------------------------------------------------
+# geopandas' __geo_interface__ gives Plotly a GeoJSON-like FeatureCollection
+# whose features are auto-assigned an "id" equal to each row's index. Plotly
+# matches that "id" against the `locations` column below, so no explicit
+# featureidkey is needed as long as `locations` is the same index.
+gdf = gdf.reset_index(drop=True)
+
+fig = px.choropleth_mapbox(
+    gdf,
+    geojson=gdf.__geo_interface__,
+    locations=gdf.index,
+    color_discrete_sequence=["#7FB3D5"],
+    mapbox_style="carto-positron",
+    center={"lat": gdf.geometry.centroid.y.mean(), "lon": gdf.geometry.centroid.x.mean()},
+    zoom=9.5,
+    opacity=0.5,
+    hover_name="GEOID",
+    hover_data={"NAME": True, "GEOID": True},
+)
+
+fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=700)
+fig.update_traces(marker_line_width=1, marker_line_color="white")
+
+st.plotly_chart(fig, use_container_width=True)
+
+with st.expander("Tract table"):
+    st.dataframe(gdf[["GEOID", "NAME", "ALAND", "AWATER"]].reset_index(drop=True))
+
+# back to human code - explains solutions
 st.write("An explanation of the solutions:")
 st.write("Green Street: A street with vegetation and structures/materials to manage stormwater runoff.")
 st.write("Green Parking Lot: A parking lot with permeable surfaces and vegetation alongisde parking spaces. ")
