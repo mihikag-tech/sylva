@@ -17,7 +17,7 @@ county = st.selectbox(
     unique_counties, 
 )
 #Records budget through numerical entry; saves in var 'budget'
-budget = st.number_input("What's your budget (in thousands)?")
+budget = int(st.number_input("What's your budget (in thousands)?")) * 1000
 st.write("Your budget is " + str(budget) + "k and your county is " + str(county))
 
 df = pd.read_csv('Combined_dataset_model.csv')
@@ -126,7 +126,6 @@ def impact_calc(model, county, solution_effects, features):
     return pd.DataFrame(final_results)
 
 result = impact_calc(model, county, solution_effects, features)
-st.dataframe(result)
 
 costs = [c for c in solution_effects['Cost']]
 st.write(costs)
