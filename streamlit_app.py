@@ -199,14 +199,15 @@ for index, row in result.iterrows():
         park * int(costs[5]) +
         garden * int(costs[6]))]
     })])
-    st.dataframe(final_results)
   elif status == cp_model.INFEASIBLE:
     st.write("No solution found that satisfies the constraints.")
   else:
     st.write("Solver could not find an optimal or feasible solution.")
 
+st.dataframe(final_results)
+
 
 st.write("An explanation of the solutions:")
 explanations = pd.read_csv('Green Intervention Budgets - Sheet2.csv')
 for row in explanations.iterrows():
-   print(row)
+   st.write(row)
