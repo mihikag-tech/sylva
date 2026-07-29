@@ -209,5 +209,7 @@ st.dataframe(final_results)
 
 st.write("An explanation of the solutions:")
 explanations = pd.read_csv('Green Intervention Budgets - Sheet2.csv')
+explanations.drop(columns = ["Unnamed: 0"], inplace = True)
 for row in explanations.iterrows():
-   st.write(row)
+   st.write("intervention name", row['intervention'])
+   st.write("description", row['description'])
